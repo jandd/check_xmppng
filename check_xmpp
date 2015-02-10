@@ -52,7 +52,7 @@ class XmppStreamError(object):
         return self.condition
 
 
-class XmppClientServerResponseHandler(ContentHandler):
+class XmppResponseHandler(ContentHandler):
     seen_elements = set()
     mechanisms = []
     starttls = False
@@ -66,7 +66,7 @@ class XmppClientServerResponseHandler(ContentHandler):
 
     def __init__(self, expect_starttls):
         self.expect_starttls = expect_starttls
-        super(XmppClientServerResponseHandler, self).__init__()
+        super(XmppResponseHandler, self).__init__()
 
     def startElementNS(self, name, qname, attrs):
         self.inelem.append(name)
@@ -170,12 +170,9 @@ class Xmpp(nagiosplugin.Resource):
         self.parser.setFeature(feature_namespaces, True)
 
     def set_content_handler(self):
-        if self.is_server:
-            pass  # TODO: make server parser
-        else:
-            self.contenthandler = XmppClientServerResponseHandler(
-                expect_starttls=self.starttls)
-            self.parser.setContentHandler(self.contenthandler)
+        self.contenthandler = XmppResponseHandler(
+            expect_starttls=self.starttls)
+        self.parser.setContentHandler(self.contenthandler)
 
     def get_addrinfo(self):
         if self.ipv6 is None:
@@ -212,6 +209,7 @@ class Xmpp(nagiosplugin.Resource):
         self, message_str, timeout=0.1, expected_state=None
     ):
         self.socket.sendall(message_str.encode('utf-8'))
+        _LOG.debug("wrote %s", message_str)
         chunks = []
         while True:
             rready, wready, xready = select([self.socket], [], [], timeout)
@@ -221,7 +219,9 @@ class Xmpp(nagiosplugin.Resource):
                 chunks.append(data)
             else:
                 break
-        self.parser.feed(b''.join(chunks).decode('utf-8'))
+        xmltext = b''.join(chunks).decode('utf-8')
+        _LOG.debug("read %s", xmltext)
+        self.parser.feed(xmltext)
         if (
             expected_state is not None and
             self.contenthandler.state != expected_state
@@ -229,17 +229,23 @@ class Xmpp(nagiosplugin.Resource):
             raise XmppException(
                 "unexpected state %s" % self.contenthandler.state)
 
-    def handle_server(self):
-        pass
-
     def start_stream(self):
-        self.handle_xmpp_stanza((
-            "<?xml version='1.0' ?><stream:stream to='{servername}' "
-            "xmlns='jabber:client' "
-            "xmlns:stream='http://etherx.jabber.org/streams' "
-            "version='1.0'>"
-        ).format(servername=self.servername),
-            expected_state=XMPP_STATE_RECEIVED_FEATURES)
+        if self.is_server:
+            self.handle_xmpp_stanza((
+                "<?xml version='1.0' ?><stream:stream to='{servername}' "
+                "xmlns='jabber:server' "
+                "xmlns:stream='http://etherx.jabber.org/streams' "
+                "version='1.0'>"
+            ).format(servername=self.servername),
+                expected_state=XMPP_STATE_RECEIVED_FEATURES)
+        else:
+            self.handle_xmpp_stanza((
+                "<?xml version='1.0' ?><stream:stream to='{servername}' "
+                "xmlns='jabber:client' "
+                "xmlns:stream='http://etherx.jabber.org/streams' "
+                "version='1.0'>"
+            ).format(servername=self.servername),
+                expected_state=XMPP_STATE_RECEIVED_FEATURES)
 
     def setup_ssl_context(self):
         context = ssl.create_default_context()
@@ -268,6 +274,7 @@ class Xmpp(nagiosplugin.Resource):
         return context
 
     def initiate_tls(self):
+        _LOG.debug("start initiate_tls()")
         self.handle_xmpp_stanza(
             "<starttls xmlns='{xmlns}'/>".format(xmlns=NS_IETF_XMPP_TLS),
             expected_state=XMPP_STATE_PROCEED_STARTTLS)
@@ -275,6 +282,7 @@ class Xmpp(nagiosplugin.Resource):
         try:
             self.socket = sslcontext.wrap_socket(
                 self.socket, server_hostname=self.servername)
+            _LOG.info("TLS socket setup successful")
         except ssl.SSLError as ssle:
             raise XmppException("SSL error %s" % ssle.strerror)
         except ssl.CertificateError as certerr:
@@ -297,25 +305,26 @@ class Xmpp(nagiosplugin.Resource):
         self.start_stream()
         if not self.contenthandler.is_valid_start():
             raise XmppException("no valid response to XMPP client request")
+        _LOG.debug("end initiate_tls()")
 
-    def handle_client(self):
+    def handle_xmpp(self):
+        _LOG.debug("start handle_xmpp()")
         self.start_stream()
         if not self.contenthandler.is_valid_start():
             raise XmppException("no valid response to XMPP client request")
         if self.starttls is True or self.contenthandler.tlsrequired:
             self.initiate_tls()
         self.handle_xmpp_stanza("</stream:stream>")
+        _LOG.debug("end handle_xmpp()")
 
     def probe(self):
         start = datetime.now()
+        _LOG.debug("start probe() at %s", start)
         try:
             addrinfo = self.get_addrinfo()
             self.socket = self.open_socket(addrinfo)
             try:
-                if self.is_server:
-                    self.handle_server()
-                else:
-                    self.handle_client()
+                self.handle_xmpp()
             finally:
                 self.socket.close()
             self.parser.close()
@@ -326,8 +335,11 @@ class Xmpp(nagiosplugin.Resource):
         except XmppException as e:
             self.state = nagiosplugin.Critical
             self.cause = e.message
-            return nagiosplugin.Metric("time", "unknown")
+            _LOG.debug("got an XmppException %s", e)
+            yield nagiosplugin.Metric('time', 'unknown')
+            return nagiosplugin.Metric('daysleft', 'unknown')
         end = datetime.now()
+        _LOG.debug("end probe() at %s", end)
         yield nagiosplugin.Metric(
             'time', (end - start).total_seconds(), 's', min=0)
         yield nagiosplugin.Metric('daysleft', self.daysleft, 'd')
