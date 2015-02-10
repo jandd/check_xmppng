@@ -1,0 +1,24 @@
+nagios/icinga check for XMPP
+============================
+
+
+Usage:
+------
+
+usage: check_xmpp [-h] -H HOST_ADDRESS [-p PORT] [-s | -c] [-4 | -6]
+                  [--servername SERVERNAME] [--starttls]
+
+Check XMPP services
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -H HOST_ADDRESS, --host-address HOST_ADDRESS
+                        host address
+  -p PORT, --port PORT  port
+  -s, --s2s             server to server (s2s)
+  -c, --c2s             client to server (c2s)
+  -4, --ipv4            enforce IPv4
+  -6, --ipv6            enforce IPv6
+  --servername SERVERNAME
+                        server name to be used
+  --starttls            check whether the service allows starttls

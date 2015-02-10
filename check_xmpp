@@ -1,0 +1,126 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import nagiosplugin
+import socket
+from datetime import datetime
+
+
+class Xmpp(nagiosplugin.Resource):
+    state = nagiosplugin.Unknown
+    cause = None
+
+    def __init__(self, host_address, port, ipv6, is_server, starttls,
+                 servername):
+        self.address = host_address
+        self.port = port
+        self.ipv6 = ipv6
+        self.is_server = is_server
+        self.starttls = starttls
+        self.servername = servername
+
+    def probe(self):
+        start = datetime.now()
+        try:
+            for res in self.get_addrinfo():
+                af, socktype, proto, canonname, sa = res
+                try:
+                    s = socket.socket(af, socktype, proto)
+                except socket.error:
+                    s = None
+                    continue
+                try:
+                    s.connect(sa)
+                except socket.error:
+                    s.close()
+                    s = None
+                    continue
+                break
+            if s is None:
+                self.state = nagiosplugin.Critical
+                self.cause = 'could not open socket'
+                return nagiosplugin.Metric("time", "unknown")
+            s.close()
+        except socket.gaierror as e:
+            self.state = nagiosplugin.Critical
+            self.cause = str(e)
+            return nagiosplugin.Metric("time", "unknown")
+        end = datetime.now()
+        return nagiosplugin.Metric(
+            'time', (end - start).total_seconds(), 's', min=0)
+
+    def get_addrinfo(self):
+        if self.ipv6 is None:
+            addrfamily = 0
+        elif self.ipv6 is True:
+            addrfamily = socket.AF_INET6
+        else:
+            addrfamily = socket.AF_INET
+        return socket.getaddrinfo(
+            self.address, self.port, addrfamily, socket.SOCK_STREAM,
+            socket.IPPROTO_TCP)
+        self.result = nagiosplugin.Critical
+
+
+class XmppContext(nagiosplugin.ScalarContext):
+
+    def evaluate(self, metric, resource):
+        if resource.cause:
+            return nagiosplugin.Result(resource.state, resource.cause, metric)
+        return super(XmppContext, self).evaluate(metric, resource)
+
+
+@nagiosplugin.guarded
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Check XMPP services")
+    parser.add_argument(
+        "-H", "--host-address", help="host address", required=True)
+    parser.add_argument(
+        "-p", "--port", help="port", type=int)
+    is_server = parser.add_mutually_exclusive_group()
+    is_server.add_argument(
+        "--s2s", dest="is_server", action='store_true',
+        help="server to server (s2s)")
+    is_server.add_argument(
+        "--c2s", dest="is_server", action='store_false',
+        help="client to server (c2s)")
+    ipv6 = parser.add_mutually_exclusive_group()
+    ipv6.add_argument(
+        "-4", "--ipv4", dest="ipv6", action='store_false',
+        help="enforce IPv4")
+    ipv6.add_argument(
+        "-6", "--ipv6", dest="ipv6", action='store_true',
+        help="enforce IPv6")
+    parser.add_argument(
+        "--servername", help="server name to be used")
+    parser.add_argument(
+        "--starttls",
+        action='store_true', help="check whether the service allows starttls")
+    parser.set_defaults(is_server=False, ipv6=None)
+    parser.add_argument(
+        "-w", "--warning", metavar="SECONDS", default='',
+        help="return warning if connection setup takes longer than SECONDS")
+    parser.add_argument(
+        "-c", "--critical", metavar="SECONDS", default='',
+        help="return critical if connection setup takes longer than SECONDS")
+    args = parser.parse_args()
+    if args.port is None:
+        if args.is_server:
+            args.port = 5269
+        else:
+            args.port = 5222
+    if args.servername is None:
+        args.servername = args.host_address
+    kwargs = vars(args)
+    warning = kwargs.pop('warning')
+    critical = kwargs.pop('critical')
+    check = nagiosplugin.Check(
+        Xmpp(**kwargs),
+        XmppContext('time', warning, critical)
+    )
+    check.main()
+
+
+if __name__ == "__main__":
+    main()
