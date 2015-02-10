@@ -400,7 +400,8 @@ def main():
         "-c", "--critical", metavar="SECONDS", default='',
         help="return critical if connection setup takes longer than SECONDS")
     parser.add_argument(
-        "--no-check-certificates", dest='checkcerts', action='store_false')
+        "--no-check-certificates", dest='checkcerts', action='store_false',
+        help="do not check whether the XMPP server's certificate is valid")
     parser.add_argument(
         "-r", "--ca-roots", dest="caroots",
         help="path to a file or directory where CA certifcates can be found")
