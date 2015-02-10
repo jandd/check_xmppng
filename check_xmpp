@@ -108,10 +108,10 @@ class Xmpp(nagiosplugin.Resource):
     def handle_server(self, xmppsocket):
         pass
 
-    def handle_xmpp_stanza(self, xmppsocket, message_str):
+    def handle_xmpp_stanza(self, xmppsocket, message_str, timeout=0.1):
         xmppsocket.sendall(message_str.encode('utf-8'))
         while True:
-            rready, wready, xready = select([xmppsocket], [], [], 0.1)
+            rready, wready, xready = select([xmppsocket], [], [], timeout)
             if xmppsocket in rready:
                 data = xmppsocket.recv(4096)
                 if not data: break
