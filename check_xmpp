@@ -1,12 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
 from datetime import datetime
 import socket
-from xml.sax import make_parser
+from select import select
 from xml.sax.handler import ContentHandler, feature_namespaces
 
+from defusedxml.sax import make_parser
 import nagiosplugin
 
 
@@ -47,7 +48,7 @@ class XmppClientServerResponseHandler(ContentHandler):
         if self.inelem[-1] == (NS_XMPP_SASL, 'mechanism'):
             self.mechanisms.append(content)
         else:
-            print self.inelem, content
+            print(self.inelem, content)
 
     def is_valid_start(self):
         return True  # TODO: some real implementation
@@ -107,22 +108,27 @@ class Xmpp(nagiosplugin.Resource):
     def handle_server(self, xmppsocket):
         pass
 
-    def is_valid_client_response(self, xmldata):
-        self.parser.feed(xmldata)
-        return self.contenthandler.is_valid_start()
+    def handle_xmpp_stanza(self, xmppsocket, message_str):
+        xmppsocket.sendall(message_str.encode('utf-8'))
+        while True:
+            rready, wready, xready = select([xmppsocket], [], [], 0.1)
+            if xmppsocket in rready:
+                data = xmppsocket.recv(4096)
+                if not data: break
+                self.parser.feed(data.decode('utf-8'))
+            else:
+                break
 
     def handle_client(self, xmppsocket):
-        xmppsocket.sendall((
+        self.handle_xmpp_stanza(xmppsocket, (
             "<?xml version='1.0' ?><stream:stream to='{servername}' "
             "xmlns='jabber:client' "
             "xmlns:stream='http://etherx.jabber.org/streams' "
             "version='1.0'>"
         ).format(servername=self.servername))
-        if not self.is_valid_client_response(xmppsocket.recv(4096)):
+        if not self.contenthandler.is_valid_start():
             raise XmppException("no valid response to XMPP client request")
-        xmppsocket.sendall("</stream:stream>")
-        self.parser.feed(xmppsocket.recv(4096))
-
+        self.handle_xmpp_stanza(xmppsocket, "</stream:stream>")
 
     def probe(self):
         start = datetime.now()
