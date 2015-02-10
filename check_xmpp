@@ -13,9 +13,12 @@ import ssl
 from defusedxml.sax import make_parser
 import nagiosplugin
 
+__author__ = "Jan Dittberner"
+__version__ = "0.1"
+
 
 NS_IETF_XMPP_SASL = 'urn:ietf:params:xml:ns:xmpp-sasl'
-NS_IETF_XMPP_TLS  = 'urn:ietf:params:xml:ns:xmpp-tls'
+NS_IETF_XMPP_TLS = 'urn:ietf:params:xml:ns:xmpp-tls'
 NS_IETF_XMPP_STREAMS = 'urn:ietf:params:xml:ns:xmpp-streams'
 NS_JABBER_CAPS = 'http://jabber.org/protocol/caps'
 NS_ETHERX_STREAMS = 'http://etherx.jabber.org/streams'
@@ -215,7 +218,8 @@ class Xmpp(nagiosplugin.Resource):
             rready, wready, xready = select([self.socket], [], [], timeout)
             if self.socket in rready:
                 data = self.socket.recv(4096)
-                if not data: break
+                if not data:
+                    break
                 chunks.append(data)
             else:
                 break
@@ -357,7 +361,8 @@ class DaysValidContext(nagiosplugin.Context):
 
     def __init__(
         self, name, warndays=0, critdays=0,
-        fmt_metric='certificate expires in {value} days'):
+        fmt_metric='certificate expires in {value} days'
+    ):
         super(DaysValidContext, self).__init__(name, fmt_metric=fmt_metric)
         self.warning = nagiosplugin.Range('@%d:' % warndays)
         self.critical = nagiosplugin.Range('@%d:' % critdays)
