@@ -40,6 +40,7 @@ class XmppClientServerResponseHandler(ContentHandler):
         elif name == (NS_XMPP_CAPS, 'c'):
             for qname in attrs.getQNames():
                 self.capabilities[qname] = attrs.getValueByQName(qname)
+        # print(name, attrs.getQNames())
 
     def endElementNS(self, name, qname):
         del self.inelem[-1]
@@ -110,14 +111,16 @@ class Xmpp(nagiosplugin.Resource):
 
     def handle_xmpp_stanza(self, xmppsocket, message_str, timeout=0.1):
         xmppsocket.sendall(message_str.encode('utf-8'))
+        chunks = []
         while True:
             rready, wready, xready = select([xmppsocket], [], [], timeout)
             if xmppsocket in rready:
                 data = xmppsocket.recv(4096)
                 if not data: break
-                self.parser.feed(data.decode('utf-8'))
+                chunks.append(data)
             else:
                 break
+        self.parser.feed(b''.join(chunks).decode('utf-8'))
 
     def handle_client(self, xmppsocket):
         self.handle_xmpp_stanza(xmppsocket, (
