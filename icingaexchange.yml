@@ -1,0 +1,32 @@
+name: check_xmppng
+description: "file:///README.md"
+url: "https://git.dittberner.info/?p=check_xmpp.git"
+tags: XMPP, X.509
+target: Messaging
+type: Plugin
+license: gplv3
+releases:
+  -
+    name: 0.1.2
+    description: "first icingaexchange release"
+    files:
+      -
+        name: check_xmppng
+        url: "file:///check_xmppng"
+        description: "Check command"
+        checksum: ea874414246a713b0754ce77bdd48f6c
+      -
+        name: COPYING
+        url: "file:///COPYING"
+        description: "GPL 3.0 license text"
+        checksum: d32239bcb673463ab874e80d47fae504
+      -
+        name: README.md
+        url: "file:///README.md"
+        description: "documentation"
+        checksum: 1e6f6632b12e4ef5fc4f02c3ea65da8a
+      -
+        name: changes.md
+        url: "file:///changes.md"
+        description: "change log"
+        checksum: b30530b4d4bb424be800898aed67a4d9
