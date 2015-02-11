@@ -2,6 +2,7 @@ name: check_xmppng
 description: "file:///README.md"
 url: "https://git.dittberner.info/?p=check_xmpp.git"
 tags: XMPP, X.509
+vendor:
 target: Messaging
 type: Plugin
 license: gplv3
