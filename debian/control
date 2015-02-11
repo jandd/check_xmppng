@@ -1,0 +1,30 @@
+Source: nagios-check-xmppng
+Section: net
+Priority: extra
+Maintainer: Jan Dittberner <jandd@debian.org>
+Homepage: https://exchange.icinga.org/jandd/check_xmppng
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.6
+Vcs-Browser: https://git.dittberner.info/?p=check_xmpp.git
+Vcs-Git: https://git.dittberner.info/check_xmpp.git -b debian
+
+Package: nagios-check-xmppng
+Architecture: all
+Depends: python3 (>= 3.4),
+         python3-defusedxml (>= 0.4.1),
+         python3-nagiosplugin (>= 1.2.2),
+         ${misc:Depends}
+Suggests: icinga | icinga2 | nagios3
+Description: monitoring plugin to check XMPP servers
+ a nagios compatible check plugin for XMPP servers implementing the XMPP
+ protocol as specified in RFC 6120.
+ .
+ The plugin provides the following features:
+ .
+   - check client to server (C2S) as well as server to server (S2S) ports
+   - check XMPP servers on IPv6 and IPv4 addresses
+   - support STARTTLS as specified in RFC 6120 section 5.
+   - check the validity of the server certificate presented by the XMPP server
+ .
+ The plugin has been implemented because of insufficiencies in the existing
+ check_ssl_cert and check_xmpp plugins.
