@@ -1,5 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+# Nagios compatible check for XMPP servers.
+# Copyright (C) 2015  Jan Dittberner
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 from __future__ import absolute_import
 
 from datetime import datetime
@@ -44,6 +61,10 @@ class XmppException(Exception):
 
 
 class XmppStreamError(object):
+    """
+    XMPP stream error class.
+
+    """
     condition = None
     text = None
     other_elements = {}
@@ -56,6 +77,10 @@ class XmppStreamError(object):
 
 
 class XmppResponseHandler(ContentHandler):
+    """
+    SAX content handler for XMPP stream content.
+
+    """
     seen_elements = set()
     mechanisms = []
     starttls = False
@@ -148,6 +173,10 @@ class XmppResponseHandler(ContentHandler):
 
 
 class Xmpp(nagiosplugin.Resource):
+    """
+    Xmpp resource.
+
+    """
     state = nagiosplugin.Unknown
     cause = None
     socket = None
@@ -169,15 +198,28 @@ class Xmpp(nagiosplugin.Resource):
         self.set_content_handler()
 
     def make_parser(self):
+        """
+        Create and configure a SAX parser instance.
+
+        """
         self.parser = make_parser()
         self.parser.setFeature(feature_namespaces, True)
 
     def set_content_handler(self):
+        """
+        Set the XMPP SAX content handler.
+
+        """
         self.contenthandler = XmppResponseHandler(
             expect_starttls=self.starttls)
         self.parser.setContentHandler(self.contenthandler)
 
     def get_addrinfo(self):
+        """
+        Perform the DNS lookup and return a list of potential socket address
+        tuples as returned by :py:method:`socket.getaddrinfo`.
+
+        """
         if self.ipv6 is None:
             addrfamily = 0
         elif self.ipv6 is True:
@@ -190,6 +232,11 @@ class Xmpp(nagiosplugin.Resource):
         self.result = nagiosplugin.Critical
 
     def open_socket(self, addrinfo):
+        """
+        Open a client socket based on information in the addrinfo list of
+        tuples.
+
+        """
         for res in addrinfo:
             af, socktype, proto, canonname, sa = res
             try:
@@ -211,6 +258,19 @@ class Xmpp(nagiosplugin.Resource):
     def handle_xmpp_stanza(
         self, message_str, timeout=0.1, expected_state=None
     ):
+        """
+        Handle a single XMPP message.
+
+        This method sends the message specified as ``message_str`` and receives
+        input from the remote XMPP server. The response message is passed to
+        the SAX parser.
+
+        The method can optionally check for a specific state of the SAX content
+        handler that can be specified as ``expected_state`` which needs to be
+        one of the ``XMPP_STATE_*`` constants specified in the head of this
+        file.
+
+        """
         self.socket.sendall(message_str.encode('utf-8'))
         _LOG.debug("wrote %s", message_str)
         chunks = []
@@ -234,6 +294,10 @@ class Xmpp(nagiosplugin.Resource):
                 "unexpected state %s" % self.contenthandler.state)
 
     def start_stream(self):
+        """
+        Start a XMPP conversation with the server.
+
+        """
         if self.is_server:
             self.handle_xmpp_stanza((
                 "<?xml version='1.0' ?><stream:stream to='{servername}' "
@@ -252,6 +316,10 @@ class Xmpp(nagiosplugin.Resource):
                 expected_state=XMPP_STATE_RECEIVED_FEATURES)
 
     def setup_ssl_context(self):
+        """
+        Setup the SSL/TLS context.
+
+        """
         context = ssl.create_default_context()
         context.options = ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3
         if not self.checkcerts:
@@ -278,6 +346,12 @@ class Xmpp(nagiosplugin.Resource):
         return context
 
     def initiate_tls(self):
+        """
+        Switch the client socket to TLS by performing a TLS handshake. If
+        certificate checks are requested the method checks the certificate
+        validity.
+
+        """
         _LOG.debug("start initiate_tls()")
         self.handle_xmpp_stanza(
             "<starttls xmlns='{xmlns}'/>".format(xmlns=NS_IETF_XMPP_TLS),
@@ -312,6 +386,10 @@ class Xmpp(nagiosplugin.Resource):
         _LOG.debug("end initiate_tls()")
 
     def handle_xmpp(self):
+        """
+        Perform the XMPP conversation.
+
+        """
         _LOG.debug("start handle_xmpp()")
         self.start_stream()
         if not self.contenthandler.is_valid_start():
@@ -322,6 +400,11 @@ class Xmpp(nagiosplugin.Resource):
         _LOG.debug("end handle_xmpp()")
 
     def probe(self):
+        """
+        Entry point for the nagiosplugin.Resource APIs. Wraps the call to
+        :py:method:`Xmpp.handle_xmpp` and handles errors appropriately.
+
+        """
         start = datetime.now()
         _LOG.debug("start probe() at %s", start)
         try:
@@ -350,14 +433,28 @@ class Xmpp(nagiosplugin.Resource):
 
 
 class XmppContext(nagiosplugin.ScalarContext):
+    """
+    Context for checking the connection time and potential errors that occurred
+    during the XMPP check.
+
+    """
 
     def evaluate(self, metric, resource):
+        """
+        Evaluate the time contained in the ``metric`` or the resource state in
+        case of an exception that has been handled during the check.
+
+        """
         if resource.cause:
             return nagiosplugin.Result(resource.state, resource.cause, metric)
         return super(XmppContext, self).evaluate(metric, resource)
 
 
 class DaysValidContext(nagiosplugin.Context):
+    """
+    Context for checking the certificate expiry date.
+
+    """
 
     def __init__(
         self, name, warndays=0, critdays=0,
@@ -385,6 +482,10 @@ class DaysValidContext(nagiosplugin.Context):
 
 @nagiosplugin.guarded
 def main():
+    """
+    Handle command line parameters and initiate the check.
+
+    """
     import argparse
     parser = argparse.ArgumentParser(description="Check XMPP services")
     parser.add_argument(
