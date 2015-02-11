@@ -1,5 +1,5 @@
-nagios-check-xmppng (0.1.2-1) UNRELEASED; urgency=medium
+nagios-check-xmppng (0.1.2-1) unstable; urgency=medium
 
   * Initial release. (Closes: #777732)
 
- -- Jan Dittberner <jandd@debian.org>  Wed, 11 Feb 2015 23:46:46 +0100
+ -- Jan Dittberner <jandd@debian.org>  Thu, 12 Feb 2015 00:49:30 +0100
