@@ -31,7 +31,7 @@ from defusedxml.sax import make_parser
 import nagiosplugin
 
 __author__ = "Jan Dittberner"
-__version__ = "0.1"
+__version__ = "0.1.1"
 
 
 NS_IETF_XMPP_SASL = 'urn:ietf:params:xml:ns:xmpp-sasl'
