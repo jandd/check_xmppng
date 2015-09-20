@@ -1,6 +1,7 @@
 nagios-check-xmppng (0.1.2-1~bpo8+1) jessie-backports; urgency=medium
 
   * Rebuild for jessie-backports.
+  * set jessie-backports as debian branch in debian/gbp.conf
 
  -- Jan Dittberner <jandd@debian.org>  Sun, 20 Sep 2015 18:38:33 +0200
 
