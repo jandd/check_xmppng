@@ -31,7 +31,7 @@ from defusedxml.sax import make_parser
 import nagiosplugin
 
 __author__ = "Jan Dittberner"
-__version__ = "0.1.2"
+__version__ = "0.2"
 
 
 NS_IETF_XMPP_SASL = 'urn:ietf:params:xml:ns:xmpp-sasl'
@@ -418,6 +418,7 @@ class Xmpp(nagiosplugin.Resource):
         except socket.gaierror as e:
             self.state = nagiosplugin.Critical
             self.cause = str(e)
+            _LOG.debug("got an gaierror %s", e)
             return nagiosplugin.Metric("time", "unknown")
         except XmppException as e:
             self.state = nagiosplugin.Critical
@@ -455,29 +456,48 @@ class DaysValidContext(nagiosplugin.Context):
     Context for checking the certificate expiry date.
 
     """
+    fmt_hint = "less than {value} days"
 
     def __init__(
         self, name, warndays=0, critdays=0,
-        fmt_metric='certificate expires in {value} days'
+        fmt_metric='certificate valid for {value} days'
     ):
         super(DaysValidContext, self).__init__(name, fmt_metric=fmt_metric)
         self.warning = nagiosplugin.Range('@%d:' % warndays)
         self.critical = nagiosplugin.Range('@%d:' % critdays)
+        self.warndays = warndays
+        self.critdays = critdays
 
     def evaluate(self, metric, resource):
         if resource.checkcerts and metric.value is not None:
-            hint = self.describe(metric)
             if self.critical.match(metric.value):
-                return nagiosplugin.Result(nagiosplugin.Critical, hint, metric)
+                return nagiosplugin.Result(
+                    nagiosplugin.Critical,
+                    hint=self.fmt_hint.format(value=self.critdays),
+                    metric=metric)
             if self.warning.match(metric.value):
-                return nagiosplugin.Result(nagiosplugin.Warn, hint, metric)
-            return nagiosplugin.Result(nagiosplugin.Ok, hint, metric)
+                return nagiosplugin.Result(
+                    nagiosplugin.Warn,
+                    hint=self.fmt_hint.format(value=self.warndays),
+                    metric=metric)
+            return nagiosplugin.Result(
+                nagiosplugin.Ok, "", metric)
         return nagiosplugin.Result(nagiosplugin.Ok)
 
     def performance(self, metric, resource):
         if resource.checkcerts and metric.value is not None:
             return nagiosplugin.Performance('daysvalid', metric.value, 'd')
         return None
+
+
+class XmppSummary(nagiosplugin.Summary):
+    """
+    Summary instance that outputs all metrics if the check results are ok.
+
+    """
+
+    def ok(self, results):
+        return ", ".join([str(res) for res in results])
 
 
 @nagiosplugin.guarded
@@ -551,8 +571,10 @@ def main():
     ]
     check = nagiosplugin.Check(
         Xmpp(**kwargs),
-        XmppContext('time', warning, critical),
-        DaysValidContext('daysleft', warndays, critdays)
+        XmppContext(
+            'time', warning, critical, fmt_metric="request took {value}{uom}"),
+        DaysValidContext('daysleft', warndays, critdays),
+        XmppSummary(),
     )
     check.main(verbose=verbose, timeout=0)
 
