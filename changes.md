@@ -1,5 +1,10 @@
 # change log
 
+## version 0.2 yyyy-mm-dd
+
+* improve human readable output by returning both response time as well as
+  certificate expiry
+
 ## version 0.1.2 2015-02-11
 
 * first icinga exchange release
