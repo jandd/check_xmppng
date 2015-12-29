@@ -1,6 +1,6 @@
 # change log
 
-## version 0.2 yyyy-mm-dd
+## version 0.2 2015-12-29
 
 * improve human readable output by returning both response time as well as
   certificate expiry
