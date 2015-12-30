@@ -1,8 +1,8 @@
-nagios-check-xmppng (0.2-1) UNRELEASED; urgency=medium
+nagios-check-xmppng (0.2-1) unstable; urgency=medium
 
   * New upstream version
 
- -- Jan Dittberner <jandd@debian.org>  Tue, 29 Dec 2015 23:00:43 +0100
+ -- Jan Dittberner <jandd@debian.org>  Wed, 30 Dec 2015 11:22:18 +0100
 
 nagios-check-xmppng (0.1.2-1) unstable; urgency=medium
 
