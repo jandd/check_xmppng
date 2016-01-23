@@ -1,5 +1,9 @@
 # change log
 
+## version 0.2.1 2016-01-23
+
+* fix perfdata output for daysvalid metric
+
 ## version 0.2 2015-12-29
 
 * improve human readable output by returning both response time as well as
