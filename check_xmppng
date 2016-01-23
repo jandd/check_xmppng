@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Nagios compatible check for XMPP servers.
-# Copyright (C) 2015  Jan Dittberner
+# Copyright (C) 2015-2016  Jan Dittberner
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -486,7 +486,7 @@ class DaysValidContext(nagiosplugin.Context):
 
     def performance(self, metric, resource):
         if resource.checkcerts and metric.value is not None:
-            return nagiosplugin.Performance('daysvalid', metric.value, 'd')
+            return nagiosplugin.Performance('daysvalid', metric.value, '')
         return None
 
 
