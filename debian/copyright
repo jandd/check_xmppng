@@ -4,7 +4,7 @@ Upstream-Contact: Jan Dittberner <jan@dittberner.info>
 Source: https://git.dittberner.info/?p=check_xmpp.git
 
 Files: *
-Copyright: 2015 Jan Dittberner
+Copyright: 2015-2016 Jan Dittberner
 License: GPL-3
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by

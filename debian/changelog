@@ -1,6 +1,7 @@
 nagios-check-xmppng (0.2.1-1) UNRELEASED; urgency=medium
 
   * New upstream version
+  * Update copyright years
 
  -- Jan Dittberner <jandd@debian.org>  Sat, 23 Jan 2016 21:14:15 +0100
 
