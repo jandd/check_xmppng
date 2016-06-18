@@ -1,3 +1,9 @@
+nagios-check-xmppng (0.3.0-1) UNRELEASED; urgency=medium
+
+  * New upstream version
+
+ -- Jan Dittberner <jan@roadie.dittberner.home>  Sat, 18 Jun 2016 21:31:55 +0200
+
 nagios-check-xmppng (0.2.1-1) unstable; urgency=medium
 
   * New upstream version
