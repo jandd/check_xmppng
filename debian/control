@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Jan Dittberner <jandd@debian.org>
 Homepage: https://exchange.icinga.org/jandd/check_xmppng
 Build-Depends: debhelper (>= 9)
-Standards-Version: 3.9.6
+Standards-Version: 3.9.8
 Vcs-Browser: https://git.dittberner.info/?p=check_xmpp.git
 Vcs-Git: https://git.dittberner.info/check_xmpp.git -b debian
 
