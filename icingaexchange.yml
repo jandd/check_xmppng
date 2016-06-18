@@ -7,6 +7,28 @@ target: Messaging
 type: Plugin
 license: gplv3
 releases:
+  - name: 0.3.0
+    description: "add --hostname option"
+    files:
+      - name: check_xmppng
+        url: "file:///check_xmppng"
+        description: "Check command"
+        checksum: 9774a26db6c54af4a51902b90ffe13bc
+      -
+        name: COPYING
+        url: "file:///COPYING"
+        description: "GPL 3.0 license text"
+        checksum: d32239bcb673463ab874e80d47fae504
+      -
+        name: README.md
+        url: "file:///README.md"
+        description: "documentation"
+        checksum: 1e6f6632b12e4ef5fc4f02c3ea65da8a
+      -
+        name: changes.md
+        url: "file:///changes.md"
+        description: "change log"
+        checksum: f2c1f311817cbb51eac4c62b9c097579
   - name: 0.2.1
     description: "fixed perfdata output"
     files:
