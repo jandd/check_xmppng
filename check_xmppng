@@ -508,8 +508,11 @@ def main():
     """
     import argparse
     parser = argparse.ArgumentParser(description="Check XMPP services")
-    parser.add_argument(
-        "-H", "--host-address", help="host address", required=True)
+    host_address = parser.add_mutually_exclusive_group(required=True)
+    host_address.add_argument("-H", "--host-address", help="host address")
+    host_address.add_argument(
+        "--hostname", help="host name, alternative for host-address",
+        dest="host_address")
     parser.add_argument(
         "-p", "--port", help="port", type=int)
     is_server = parser.add_mutually_exclusive_group()

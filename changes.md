@@ -1,5 +1,10 @@
 # change log
 
+## version 0.3.0 2016-06-18
+
+* add alternative --hostname parameter to make check_xmpp compatible with
+  check_v46 (thanks to Andreas Krause for the idea)
+
 ## version 0.2.1 2016-01-23
 
 * fix perfdata output for daysvalid metric
